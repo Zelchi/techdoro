@@ -10,30 +10,31 @@ permissions:
 
 jobs:
   frontend:
-    name: frontend
+    name: check
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: yarn
           cache-dependency-path: yarn.lock
 
-      - name: Enable Yarn
+      - name: yarn
         run: corepack enable
 
-      - name: Install JavaScript dependencies
+      - name: deps
         run: yarn install --frozen-lockfile --ignore-engines
 
-      - name: Check frontend
+      - name: check
         run: yarn run check
 
   publish-tauri:
+    name: build
     needs: frontend
     strategy:
       fail-fast: false
@@ -52,25 +53,25 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: yarn
           cache-dependency-path: yarn.lock
 
-      - name: Enable Yarn
+      - name: yarn
         run: corepack enable
 
-      - name: Install Rust stable
+      - name: rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
 
-      - name: Cache Rust and Tauri build files
+      - name: cache
         uses: actions/cache@v4
         with:
           path: |
@@ -83,7 +84,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
-      - name: Install Linux dependencies
+      - name: linux deps
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
@@ -100,15 +101,15 @@ jobs:
             wget \
             xdg-utils
 
-      - name: Install JavaScript dependencies
+      - name: deps
         run: yarn install --frozen-lockfile --ignore-engines
 
-      - name: Extract release version
+      - name: version
         id: release_version
         shell: bash
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and publish Tauri bundles
+      - name: build
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -127,14 +128,12 @@ jobs:
           args: --config tauri/tauri.conf.json ${{ matrix.args }}
 
   publish-release:
-    name: Publish release
+    name: release
     needs: publish-tauri
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
 
     steps:
-      - name: Publish GitHub release
+      - name: publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit "${GITHUB_REF_NAME}" --draft=false --repo "${GITHUB_REPOSITORY}"
