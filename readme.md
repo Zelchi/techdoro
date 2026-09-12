@@ -72,8 +72,8 @@ O aplicativo verifica atualizações automaticamente ao iniciar uma versão publ
 O release é criado pelo GitHub Actions ao enviar uma tag no formato `v*`:
 
 ```bash
-git tag v3.0.0
-git push origin v3.0.0
+git tag v3.0.1
+git push origin v3.0.1
 ```
 
 Antes da primeira release, gere uma chave de assinatura e cadastre a chave privada como o secret `TAURI_SIGNING_PRIVATE_KEY` do repositório. A chave privada nunca deve ser versionada:
