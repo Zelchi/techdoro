@@ -1,0 +1,794 @@
+@font-face {
+    font-family: "Press Start 2P";
+    src: url("./assets/PressStart2P-Regular.ttf") format("truetype");
+    font-display: swap;
+}
+
+:root {
+    --bg-0: #0a0a0a;
+    --bg-1: #121212;
+    --bg-2: #1a1a1a;
+    --bg-3: #222222;
+    --text-1: #e6e6e6;
+    --text-2: #b3b3b3;
+    --accent: orange;
+    --accent-strong: darkorange;
+    --border: #2b2b2b;
+    --border-strong: #454545;
+    --radius: 10px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --shadow-1: 0 4px 20px #000;
+    --scrollbar-thumb: #4a4a4a;
+    --scrollbar-thumb-hover: #666;
+    --scrollbar-thumb-active: #808080;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none;
+    user-select: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+html,
+body,
+#root {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
+    background: transparent;
+}
+
+body {
+    overflow: hidden;
+    color: var(--text-1);
+    font-family: "Press Start 2P", monospace;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.app-shell {
+    isolation: isolate;
+    position: relative;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+}
+
+.window-bar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex: 0 0 38px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 38px;
+    padding: 0 14px;
+    color: var(--text-1);
+    background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    -webkit-app-region: drag;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.window-bar:active {
+    cursor: grabbing;
+}
+
+.window-bar__side {
+    display: flex;
+    align-items: center;
+    width: 33.333%;
+    height: 100%;
+    gap: 5px;
+}
+
+.window-bar__side--left {
+    justify-content: flex-start;
+}
+
+.window-bar__side--right {
+    justify-content: flex-end;
+}
+
+.window-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 33.333%;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.window-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+}
+
+.window-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.window-button,
+.icon-button,
+.volume-icon,
+.step-button,
+.task-save-button,
+.task-delete-button,
+.task-checkbox,
+.task-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--bg-2);
+    color: var(--text-1);
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s,
+        filter 0.15s,
+        transform 0.15s;
+}
+
+.window-button {
+    width: 26px;
+    height: 26px;
+    -webkit-app-region: no-drag;
+}
+
+.window-button:hover,
+.icon-button:hover,
+.step-button:hover,
+.task-save-button:hover,
+.task-checkbox:hover {
+    background: var(--bg-3);
+    border-color: var(--border-strong);
+}
+
+.window-button:active,
+.icon-button:active,
+.step-button:active,
+.task-save-button:active,
+.task-delete-button:active,
+.task-checkbox:active,
+.task-add-button:active {
+    filter: brightness(0.85);
+}
+
+.timer-frame {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 0 0 210px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    width: calc(100% - 28px);
+    height: 210px;
+    margin-top: 12px;
+    gap: 12px;
+}
+
+.timer-toolbar {
+    display: flex;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 42px;
+    padding: 12px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+}
+
+.toolbar-side {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    gap: 8px;
+}
+
+.toolbar-side--left {
+    justify-content: flex-start;
+}
+
+.toolbar-side--right {
+    justify-content: flex-end;
+}
+
+.icon-button {
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    font-size: 16px;
+}
+
+.icon-button--large {
+    width: 30px;
+    height: 30px;
+    background: var(--bg-1);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+}
+
+.cycle-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    gap: 5px;
+}
+
+.cycle-indicator span {
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--bg-0);
+    transition:
+        background 0.25s,
+        box-shadow 0.25s;
+}
+
+.cycle-indicator span.active {
+    background: var(--accent-strong);
+    box-shadow: 0 0 8px #8a4a00;
+}
+
+.clock-area {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    width: 100%;
+    padding: 20px;
+    gap: 10px;
+}
+
+.clock-face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+    gap: 10px;
+}
+
+.clock-face h1 {
+    width: 100%;
+    font-size: 45px;
+    text-align: center;
+}
+
+.progress-track {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+}
+
+.progress-value {
+    height: 100%;
+    min-width: 0;
+    background: var(--accent-strong);
+    border-radius: var(--radius);
+    transition: width 0.2s linear;
+}
+
+.clock-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.clock-action-spacer {
+    display: block;
+    width: 30px;
+    height: 30px;
+}
+
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    color: var(--text-1);
+    font-family: "Press Start 2P", monospace;
+    font-size: 15px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        filter 0.15s;
+}
+
+.primary-button:hover {
+    background: var(--bg-3);
+    border-color: var(--border-strong);
+}
+
+.primary-button:active {
+    filter: brightness(0.85);
+}
+
+.taskbar {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 0;
+    width: calc(100% - 28px);
+    margin-top: 12px;
+    margin-bottom: 12px;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.task-form {
+    display: flex;
+    flex: 0 0 44px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.task-input {
+    width: 100%;
+    height: 44px;
+    padding: 12px 14px;
+    color: var(--text-1);
+    font-family: "Press Start 2P", monospace;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    user-select: text;
+    background: var(--bg-3);
+    border: 0;
+    border-right: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.task-input::placeholder {
+    color: var(--text-2);
+}
+
+.task-input:focus {
+    background: var(--bg-2);
+}
+
+.task-add-button {
+    flex: 0 0 58px;
+    width: 58px;
+    height: 44px;
+    color: var(--accent);
+    background: var(--bg-3);
+    border: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+}
+
+.task-add-button:hover {
+    color: var(--accent-strong);
+    background: var(--bg-2);
+}
+
+.task-list {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    width: 100%;
+    padding: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    gap: 10px;
+}
+
+.task-row {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 32px;
+    gap: 10px;
+}
+
+.task-text-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    width: 100%;
+    min-height: 32px;
+    margin-right: 5px;
+    overflow: hidden;
+}
+
+.task-text {
+    display: inline-block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-1);
+    font-family: "Press Start 2P", monospace;
+    font-size: 14px;
+    text-align: left;
+    text-decoration: underline;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: var(--bg-2);
+    border: 0;
+    cursor: pointer;
+}
+
+.task-text--completed {
+    color: var(--text-2);
+    text-decoration: line-through;
+}
+
+.task-text--scroll {
+    width: max-content;
+    min-width: 100%;
+    overflow: visible;
+    animation: task-scroll 10s linear infinite;
+}
+
+.task-input--editing {
+    min-width: 0;
+    width: 100%;
+    height: 32px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+}
+
+.task-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.task-checkbox,
+.task-delete-button,
+.task-save-button {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    background: var(--bg-3);
+}
+
+.task-checkbox {
+    color: var(--text-2);
+}
+
+.task-checkbox--checked {
+    color: var(--accent-strong);
+}
+
+.task-delete-button {
+    flex-basis: 34px;
+    width: 34px;
+    color: #ff6b6b;
+}
+
+.task-delete-button:hover {
+    color: #fff;
+    background: #ff3535;
+    border-color: #ff3535;
+}
+
+.task-save-button {
+    color: var(--accent);
+}
+
+.settings-panel {
+    position: absolute;
+    z-index: 0;
+    top: 50px;
+    left: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: calc(100% - 28px);
+    height: 210px;
+    background: #121212;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.settings-panel--open {
+    z-index: 3;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.settings-topbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 5px 12px;
+}
+
+.settings-close {
+    position: absolute;
+    top: 5px;
+    right: 12px;
+}
+
+.volume-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+}
+
+.volume-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    height: 30px;
+    gap: 10px;
+    padding: 6px 10px;
+    color: var(--text-1);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+}
+
+.volume-icon {
+    width: 60px;
+    height: 20px;
+    padding: 0;
+    background: var(--bg-2);
+    border: 0;
+}
+
+.volume-icon:hover {
+    background: var(--bg-3);
+}
+
+.volume-slider {
+    display: block;
+    width: 160px;
+    height: 20px;
+    padding: 0 5px;
+    cursor: pointer;
+    background: var(--bg-1);
+    border-radius: 999px;
+}
+
+.volume-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    margin: 7px 0;
+    background: linear-gradient(
+        to right,
+        var(--text-1) 0%,
+        var(--text-1) var(--volume, 30%),
+        var(--bg-1) var(--volume, 30%),
+        var(--bg-1) 100%
+    );
+    border-radius: 999px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--text-1);
+    border: 2px solid var(--bg-1);
+    border-radius: 50%;
+}
+
+.volume-slider::-moz-range-track {
+    height: 6px;
+    background: var(--bg-1);
+    border-radius: 999px;
+}
+
+.volume-slider::-moz-range-progress {
+    height: 6px;
+    background: var(--text-1);
+    border-radius: 999px 0 0 999px;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--text-1);
+    border: 2px solid var(--bg-1);
+    border-radius: 50%;
+}
+
+.volume-value {
+    min-width: 32px;
+    color: var(--text-1);
+    font-size: 12px;
+    text-align: right;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 90%;
+    margin-top: 10px;
+    gap: 12px;
+}
+
+.config-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 120px;
+    padding: 10px;
+    color: var(--text-2);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-1);
+    gap: 6px;
+}
+
+.config-item > span {
+    color: var(--text-1);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.step-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.step-button {
+    width: 28px;
+    height: 28px;
+    background: var(--bg-1);
+}
+
+.config-item input {
+    width: 70px;
+    padding: 6px 8px;
+    color: var(--text-1);
+    font-size: 12px;
+    text-align: center;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+}
+
+.config-item input::-webkit-outer-spin-button,
+.config-item input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+@keyframes task-scroll {
+    0%,
+    10% {
+        transform: translateX(0);
+    }
+
+    90%,
+    95% {
+        transform: translateX(-100%);
+    }
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-0);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-thumb-active);
+}

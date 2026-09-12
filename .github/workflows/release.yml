@@ -1,0 +1,164 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  check-desktop-frontend:
+    name: Check desktop frontend
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Yarn
+        run: corepack enable
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile --ignore-engines
+
+      - name: Check frontend
+        run: yarn run check
+
+  publish-tauri:
+    needs: check-desktop-frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            args: "--target aarch64-apple-darwin"
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            args: ""
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Yarn
+        run: corepack enable
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
+
+      - name: Cache Rust and Tauri build files
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            ~/.cache/tauri
+            tauri/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            librsvg2-dev \
+            patchelf \
+            wget \
+            xdg-utils
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile --ignore-engines
+
+      - name: Prepare updater signing key
+        shell: bash
+        env:
+          SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const secret = process.env.SIGNING_PRIVATE_KEY?.trim();
+          if (!secret) {
+            console.error('TAURI_SIGNING_PRIVATE_KEY não foi configurada.');
+            process.exit(1);
+          }
+
+          const encodedKey = secret.startsWith('untrusted comment:')
+            ? Buffer.from(secret, 'utf8').toString('base64')
+            : secret.replace(/\s+/g, '');
+          const decodedKey = Buffer.from(encodedKey, 'base64').toString('utf8');
+
+          if (!/^untrusted comment:.*secret key/m.test(decodedKey)) {
+            console.error('TAURI_SIGNING_PRIVATE_KEY não contém uma chave Tauri válida.');
+            process.exit(1);
+          }
+
+          const keyPath = path.join(process.env.RUNNER_TEMP, 'techdoro-updater.key');
+          fs.writeFileSync(keyPath, `${encodedKey}\n`, { mode: 0o600 });
+          fs.appendFileSync(process.env.GITHUB_ENV, `TAURI_SIGNING_PRIVATE_KEY_PATH=${keyPath}\n`);
+          NODE
+
+      - name: Build and publish Tauri bundles
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: .
+          tauriScript: yarn tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: Techdoro ${{ github.ref_name }}
+          releaseBody: "Baixe o instalador correspondente ao seu sistema operacional."
+          releaseDraft: true
+          prerelease: false
+          uploadUpdaterJson: true
+          retryAttempts: 2
+          args: --config tauri/tauri.conf.json ${{ matrix.args }}
+
+  publish-release:
+    name: Publish release
+    needs: publish-tauri
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${GITHUB_REF_NAME}" --draft=false --repo "${GITHUB_REPOSITORY}"

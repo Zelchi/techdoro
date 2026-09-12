@@ -1,0 +1,57 @@
+name: check
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+jobs:
+    validate:
+        name: ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - macos-latest
+                    - windows-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.12.0
+
+            - name: Enable Yarn
+              run: corepack enable
+
+            - name: Setup Rust
+              uses: dtolnay/rust-toolchain@stable
+
+            - name: Install Linux dependencies
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y \
+                    libwebkit2gtk-4.1-dev \
+                    build-essential \
+                    curl \
+                    wget \
+                    file \
+                    libxdo-dev \
+                    libssl-dev \
+                    libayatana-appindicator3-dev \
+                    librsvg2-dev
+
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Check frontend
+              run: yarn run check
+
+            - name: Check Tauri
+              run: yarn tauri:build --debug --no-bundle
