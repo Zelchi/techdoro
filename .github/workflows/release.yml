@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - "desktop-v*"
+      - "v*"
 
 permissions:
   contents: write
@@ -103,6 +103,11 @@ jobs:
       - name: Install JavaScript dependencies
         run: yarn install --frozen-lockfile --ignore-engines
 
+      - name: Extract release version
+        id: release_version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Build and publish Tauri bundles
         uses: tauri-apps/tauri-action@v0
         env:
@@ -113,7 +118,7 @@ jobs:
           projectPath: .
           tauriScript: yarn tauri
           tagName: ${{ github.ref_name }}
-          releaseName: Techdoro ${{ github.ref_name }}
+          releaseName: Techdoro ${{ steps.release_version.outputs.version }}
           releaseBody: "Baixe o instalador correspondente ao seu sistema operacional."
           releaseDraft: true
           prerelease: false
