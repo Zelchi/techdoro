@@ -79,8 +79,8 @@ git push origin desktop-v3.0.0
 Antes da primeira release, gere uma chave de assinatura e cadastre a chave privada como o secret `TAURI_SIGNING_PRIVATE_KEY` do repositório. A chave privada nunca deve ser versionada:
 
 ```bash
-yarn tauri signer generate -w ~/.tauri/techdoro.key
-gh secret set TAURI_SIGNING_PRIVATE_KEY < ~/.tauri/techdoro.key
+yarn tauri signer generate --ci --force -w tauri/key/techdoro.key
+gh secret set TAURI_SIGNING_PRIVATE_KEY < tauri/key/techdoro.key
 ```
 
 Se a chave for protegida por senha, cadastre também `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Caso uma nova chave seja gerada, atualize o campo `plugins.updater.pubkey` em `tauri/tauri.conf.json` com o conteúdo do arquivo `.pub` correspondente.
