@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  check-desktop-frontend:
-    name: Check desktop frontend
+  frontend:
+    name: frontend
     runs-on: ubuntu-22.04
 
     steps:
@@ -34,7 +34,7 @@ jobs:
         run: yarn run check
 
   publish-tauri:
-    needs: check-desktop-frontend
+    needs: frontend
     strategy:
       fail-fast: false
       matrix:
