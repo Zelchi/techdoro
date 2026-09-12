@@ -44,7 +44,7 @@
     },
     "plugins": {
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJBQTM3MDM5MjE5RTIyOEYKUldTUElwNGhPWENqS29KS2dZV1JTTnFzb2lVSVZKeDUxNkZyZUlXcGJ5MjBEVlFVMFpLQzM5TTAK",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVDNkU5NzY3ODYxMjdGRjAKUldUd2Z4S0daNWR1N0Y1d0l0RE5HcHJRYUlCRzhKWmJPcXd4S1QyMS8yU0xrTENPNWtpQ3F3dHYK",
             "endpoints": ["https://github.com/Zelchi/Techdoro/releases/latest/download/latest.json"],
             "windows": {
                 "installMode": "passive"

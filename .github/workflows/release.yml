@@ -103,40 +103,11 @@ jobs:
       - name: Install JavaScript dependencies
         run: yarn install --frozen-lockfile --ignore-engines
 
-      - name: Prepare updater signing key
-        shell: bash
-        env:
-          SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const path = require('node:path');
-
-          const secret = process.env.SIGNING_PRIVATE_KEY?.trim();
-          if (!secret) {
-            console.error('TAURI_SIGNING_PRIVATE_KEY não foi configurada.');
-            process.exit(1);
-          }
-
-          const encodedKey = secret.startsWith('untrusted comment:')
-            ? Buffer.from(secret, 'utf8').toString('base64')
-            : secret.replace(/\s+/g, '');
-          const decodedKey = Buffer.from(encodedKey, 'base64').toString('utf8');
-
-          if (!/^untrusted comment:.*secret key/m.test(decodedKey)) {
-            console.error('TAURI_SIGNING_PRIVATE_KEY não contém uma chave Tauri válida.');
-            process.exit(1);
-          }
-
-          const keyPath = path.join(process.env.RUNNER_TEMP, 'techdoro-updater.key');
-          fs.writeFileSync(keyPath, `${encodedKey}\n`, { mode: 0o600 });
-          fs.appendFileSync(process.env.GITHUB_ENV, `TAURI_SIGNING_PRIVATE_KEY_PATH=${keyPath}\n`);
-          NODE
-
       - name: Build and publish Tauri bundles
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: .

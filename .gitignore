@@ -2,5 +2,6 @@ node_modules/
 dist/
 tauri/target/
 tauri/gen/
+tauri/key/
 .tauri/
 .DS_Store
