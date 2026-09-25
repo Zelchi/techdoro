@@ -72,8 +72,8 @@ O aplicativo verifica atualizações automaticamente ao iniciar uma versão publ
 O release é criado pelo GitHub Actions ao enviar uma tag no formato `v*`:
 
 ```bash
-git tag -a v3.0.4 -m "Release v3.0.4: correção do arraste de tarefas no Windows"
-git push origin v3.0.4
+git tag -a v3.0.5 -m "Release v3.0.5: remove arredondamentos do frontend"
+git push origin v3.0.5
 ```
 
 As notas de cada release ficam em `.github/release-notes/vX.Y.Z.md`. Crie esse arquivo antes de enviar uma nova tag para que a página da release descreva as mudanças daquela versão.

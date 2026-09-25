@@ -1,6 +1,6 @@
 [package]
 name = "techdoro"
-version = "3.0.4"
+version = "3.0.5"
 description = "A simple Pomodoro timer with a task list for your desktop"
 authors = ["Zelchi"]
 edition = "2021"

@@ -15,9 +15,6 @@
     --accent-strong: darkorange;
     --border: #2b2b2b;
     --border-strong: #454545;
-    --radius: 10px;
-    --radius-sm: 8px;
-    --radius-xs: 6px;
     --shadow-1: 0 4px 20px #000;
     --scrollbar-thumb: #4a4a4a;
     --scrollbar-thumb-hover: #666;
@@ -84,6 +81,7 @@ input:focus-visible {
     height: 100%;
     overflow: hidden;
     background: var(--bg-0);
+    border: 1px solid var(--border);
 }
 
 .window-bar {
@@ -99,7 +97,6 @@ input:focus-visible {
     color: var(--text-1);
     background: var(--bg-1);
     border-bottom: 1px solid var(--border);
-    border-radius: 0;
     -webkit-app-region: drag;
     user-select: none;
     -webkit-user-select: none;
@@ -144,7 +141,6 @@ input:focus-visible {
     padding: 4px;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
 }
 
 .window-icon img {
@@ -165,7 +161,6 @@ input:focus-visible {
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
     background: var(--bg-2);
     color: var(--text-1);
     cursor: pointer;
@@ -226,7 +221,6 @@ input:focus-visible {
     padding: 12px;
     background: var(--bg-1);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     box-shadow: var(--shadow-1);
 }
 
@@ -257,7 +251,6 @@ input:focus-visible {
     width: 30px;
     height: 30px;
     background: var(--bg-1);
-    border-radius: var(--radius);
     box-shadow: var(--shadow-1);
 }
 
@@ -274,7 +267,6 @@ input:focus-visible {
     width: 10px;
     height: 10px;
     border: 1px solid var(--border-strong);
-    border-radius: 4px;
     background: var(--bg-0);
     transition:
         background 0.25s,
@@ -322,7 +314,6 @@ input:focus-visible {
     overflow: hidden;
     background: var(--bg-1);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     box-shadow: var(--shadow-1);
 }
 
@@ -330,7 +321,6 @@ input:focus-visible {
     height: 100%;
     min-width: 0;
     background: var(--accent-strong);
-    border-radius: var(--radius);
     transition: width 0.2s linear;
 }
 
@@ -358,7 +348,6 @@ input:focus-visible {
     font-size: 15px;
     background: var(--bg-1);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     box-shadow: var(--shadow-1);
     cursor: pointer;
     transition:
@@ -401,7 +390,6 @@ input:focus-visible {
     overflow: hidden;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
 }
 
 .task-input {
@@ -435,7 +423,6 @@ input:focus-visible {
     background: var(--bg-3);
     border: 0;
     border-left: 1px solid var(--border);
-    border-radius: 0;
 }
 
 .task-add-button:hover {
@@ -455,7 +442,6 @@ input:focus-visible {
     overflow-y: auto;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     gap: 10px;
     list-style: none;
 }
@@ -569,7 +555,6 @@ input:focus-visible {
     height: 32px;
     padding: 8px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
 }
 
 .task-actions {
@@ -626,7 +611,6 @@ input:focus-visible {
     height: 210px;
     background: #121212;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     box-shadow: var(--shadow-1);
     opacity: 0;
     visibility: hidden;
@@ -673,7 +657,6 @@ input:focus-visible {
     color: var(--text-1);
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
 }
 
 .volume-icon {
@@ -695,7 +678,6 @@ input:focus-visible {
     padding: 0 5px;
     cursor: pointer;
     background: var(--bg-1);
-    border-radius: 999px;
 }
 
 .volume-slider::-webkit-slider-runnable-track {
@@ -708,7 +690,6 @@ input:focus-visible {
         var(--bg-1) var(--volume, 30%),
         var(--bg-1) 100%
     );
-    border-radius: 999px;
 }
 
 .volume-slider::-webkit-slider-thumb {
@@ -719,19 +700,16 @@ input:focus-visible {
     appearance: none;
     background: var(--text-1);
     border: 2px solid var(--bg-1);
-    border-radius: 50%;
 }
 
 .volume-slider::-moz-range-track {
     height: 6px;
     background: var(--bg-1);
-    border-radius: 999px;
 }
 
 .volume-slider::-moz-range-progress {
     height: 6px;
     background: var(--text-1);
-    border-radius: 999px 0 0 999px;
 }
 
 .volume-slider::-moz-range-thumb {
@@ -739,7 +717,6 @@ input:focus-visible {
     height: 16px;
     background: var(--text-1);
     border: 2px solid var(--bg-1);
-    border-radius: 50%;
 }
 
 .volume-value {
@@ -770,7 +747,6 @@ input:focus-visible {
     letter-spacing: 0.5px;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
     box-shadow: var(--shadow-1);
     gap: 6px;
 }
@@ -801,7 +777,6 @@ input:focus-visible {
     text-align: center;
     background: var(--bg-1);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
 }
 
 .config-item input::-webkit-outer-spin-button,
@@ -832,7 +807,6 @@ input:focus-visible {
 
 ::-webkit-scrollbar-thumb {
     background-color: var(--scrollbar-thumb);
-    border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
