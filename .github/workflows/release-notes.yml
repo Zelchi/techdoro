@@ -1,0 +1,60 @@
+name: release notes
+
+on:
+  push:
+    paths:
+      - ".github/release-notes/**"
+      - ".github/workflows/release-notes.yml"
+  workflow_run:
+    workflows:
+      - release
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: update releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          update_release() {
+            local tag="$1"
+            local notes_file=".github/release-notes/${tag}.md"
+
+            if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "Release $tag ainda não existe; ignorando."
+              return 0
+            fi
+
+            gh release edit "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --notes-file "$notes_file"
+          }
+
+          if [[ -n "$RELEASE_TAG" ]]; then
+            update_release "$RELEASE_TAG"
+            exit 0
+          fi
+
+          shopt -s nullglob
+          for notes_file in .github/release-notes/v*.md; do
+            tag="${notes_file##*/}"
+            tag="${tag%.md}"
+            update_release "$tag"
+          done
