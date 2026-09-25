@@ -197,10 +197,7 @@ export default function TaskList(props: TaskListProps) {
             >
                 <For each={props.tasks()}>
                     {(task) => (
-                        <li
-                            class={taskRowClass(task)}
-                            data-task-id={task.id}
-                        >
+                        <li class={taskRowClass(task)} data-task-id={task.id}>
                             {editingId() !== task.id && (
                                 <button
                                     type="button"
