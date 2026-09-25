@@ -87,7 +87,7 @@ Se a chave for protegida por senha, cadastre também `TAURI_SIGNING_PRIVATE_KEY_
 
 O Tauri precisa das dependências nativas da plataforma. No Linux, instale WebKitGTK 4.1, GTK 3, libayatana-appindicator e as ferramentas de empacotamento recomendadas pela sua distribuição.
 
-No macOS, o projeto usa o WKWebView do sistema. No Windows, o Tauri usa o Microsoft Edge WebView2 e as ferramentas C++ da Microsoft.
+No Windows, o Tauri usa o Microsoft Edge WebView2 e as ferramentas C++ da Microsoft.
 
 Fechar a janela pelo botão superior a oculta no tray. Use `Exit` no menu do tray para encerrar o aplicativo.
 
