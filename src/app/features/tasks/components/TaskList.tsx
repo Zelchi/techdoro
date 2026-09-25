@@ -18,6 +18,12 @@ type DropTarget = {
     position: 'before' | 'after';
 };
 
+type PointerDrag = {
+    id: number;
+    pointerId: number;
+    active: boolean;
+};
+
 export default function TaskList(props: TaskListProps) {
     const [newTask, setNewTask] = createSignal('');
     const [editingId, setEditingId] = createSignal<number | null>(null);
@@ -26,6 +32,7 @@ export default function TaskList(props: TaskListProps) {
     const [draggingId, setDraggingId] = createSignal<number | null>(null);
     const [dropTarget, setDropTarget] = createSignal<DropTarget | null>(null);
     let containerRef: HTMLUListElement | undefined;
+    let pointerDrag: PointerDrag | null = null;
 
     onMount(() => {
         const updateWidth = (): void => {
@@ -86,54 +93,79 @@ export default function TaskList(props: TaskListProps) {
         (task.completed ? ' task-text--completed' : '') +
         (shouldScroll(task.text) ? ' task-text--scroll' : '');
 
-    const getDropPosition = (event: DragEvent): 'before' | 'after' => {
-        const element = event.currentTarget as HTMLLIElement;
-        const bounds = element.getBoundingClientRect();
-        return event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after';
+    const getDropTargetAtPoint = (clientX: number, clientY: number): DropTarget | null => {
+        if (!containerRef || !pointerDrag) return null;
+
+        const pointElement = document.elementFromPoint(clientX, clientY);
+        const pointRow = pointElement?.closest<HTMLElement>('.task-row[data-task-id]');
+        const isTaskRow = pointRow?.parentElement === containerRef;
+
+        if (isTaskRow) {
+            const targetId = Number(pointRow.dataset.taskId);
+            if (targetId === pointerDrag.id) return null;
+
+            const bounds = pointRow.getBoundingClientRect();
+            return {
+                id: targetId,
+                position: clientY < bounds.top + bounds.height / 2 ? 'before' : 'after',
+            };
+        }
+
+        const rows = Array.from(containerRef.querySelectorAll<HTMLElement>('.task-row[data-task-id]')).filter(
+            (row) => Number(row.dataset.taskId) !== pointerDrag?.id,
+        );
+
+        for (const row of rows) {
+            const bounds = row.getBoundingClientRect();
+            if (clientY < bounds.top + bounds.height / 2) {
+                return { id: Number(row.dataset.taskId), position: 'before' };
+            }
+        }
+
+        const lastRow = rows.at(-1);
+        return lastRow ? { id: Number(lastRow.dataset.taskId), position: 'after' } : null;
     };
 
-    const startDragging = (event: DragEvent, task: Task): void => {
-        event.dataTransfer?.setData('text/plain', String(task.id));
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+    const startPointerDragging = (event: PointerEvent, task: Task): void => {
+        if (event.button !== 0) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        const handle = event.currentTarget as HTMLElement;
+        handle.setPointerCapture(event.pointerId);
+        pointerDrag = { id: task.id, pointerId: event.pointerId, active: false };
         setDraggingId(task.id);
         setDropTarget(null);
     };
 
-    const updateDropTarget = (event: DragEvent, task: Task): void => {
-        const currentId = draggingId();
-        if (currentId === null || currentId === task.id) {
-            setDropTarget(null);
-            return;
+    const updatePointerDropTarget = (event: PointerEvent): void => {
+        if (!pointerDrag || pointerDrag.pointerId !== event.pointerId) return;
+
+        event.preventDefault();
+        pointerDrag.active = true;
+        setDropTarget(getDropTargetAtPoint(event.clientX, event.clientY));
+    };
+
+    const finishPointerDragging = (event: PointerEvent, shouldDrop: boolean): void => {
+        if (!pointerDrag || pointerDrag.pointerId !== event.pointerId) return;
+
+        event.preventDefault();
+        const handle = event.currentTarget as HTMLElement;
+        const drag = pointerDrag;
+        const target = shouldDrop ? getDropTargetAtPoint(event.clientX, event.clientY) : null;
+        pointerDrag = null;
+
+        if (handle.hasPointerCapture(event.pointerId)) {
+            handle.releasePointerCapture(event.pointerId);
         }
 
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-        setDropTarget({ id: task.id, position: getDropPosition(event) });
-    };
-
-    const finishDragging = (): void => {
-        setDraggingId(null);
-        setDropTarget(null);
-    };
-
-    const dropTask = (event: DragEvent): void => {
-        event.preventDefault();
-
-        const target = dropTarget();
-        const draggedId = draggingId() ?? Number(event.dataTransfer?.getData('text/plain'));
-        if (target && Number.isFinite(draggedId)) {
-            props.reorderTask(draggedId, target.id, target.position);
+        if (drag.active && target) {
+            props.reorderTask(drag.id, target.id, target.position);
             props.click();
         }
 
-        finishDragging();
-    };
-
-    const allowListDrop = (event: DragEvent): void => {
-        if (draggingId() === null) return;
-
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        setDraggingId(null);
+        setDropTarget(null);
     };
 
     const taskRowClass = (task: Task): string => {
@@ -162,25 +194,23 @@ export default function TaskList(props: TaskListProps) {
                 ref={(element) => {
                     containerRef = element;
                 }}
-                onDragOver={allowListDrop}
-                onDrop={dropTask}
             >
                 <For each={props.tasks()}>
                     {(task) => (
                         <li
                             class={taskRowClass(task)}
-                            onDragOver={(event) => updateDropTarget(event, task)}
-                            onDrop={dropTask}
+                            data-task-id={task.id}
                         >
                             {editingId() !== task.id && (
                                 <button
                                     type="button"
                                     class="task-drag-handle"
-                                    draggable="true"
                                     title="Arrastar tarefa"
                                     aria-label="Arrastar tarefa"
-                                    onDragStart={(event) => startDragging(event, task)}
-                                    onDragEnd={finishDragging}
+                                    onPointerDown={(event) => startPointerDragging(event, task)}
+                                    onPointerMove={updatePointerDropTarget}
+                                    onPointerUp={(event) => finishPointerDragging(event, true)}
+                                    onPointerCancel={(event) => finishPointerDragging(event, false)}
                                 >
                                     <Icon name="grip" size={18} />
                                 </button>
