@@ -55,7 +55,6 @@ body {
     font-family: "Press Start 2P", monospace;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
 button,
