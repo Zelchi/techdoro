@@ -9,7 +9,13 @@ type TaskListProps = {
     deleteTask: (id: number) => void;
     toggleTask: (id: number) => void;
     updateTask: (id: number, text: string) => void;
+    reorderTask: (id: number, targetId: number, position: 'before' | 'after') => void;
     click: () => void;
+};
+
+type DropTarget = {
+    id: number;
+    position: 'before' | 'after';
 };
 
 export default function TaskList(props: TaskListProps) {
@@ -17,7 +23,9 @@ export default function TaskList(props: TaskListProps) {
     const [editingId, setEditingId] = createSignal<number | null>(null);
     const [editingText, setEditingText] = createSignal('');
     const [containerWidth, setContainerWidth] = createSignal(0);
-    let containerRef: HTMLDivElement | undefined;
+    const [draggingId, setDraggingId] = createSignal<number | null>(null);
+    const [dropTarget, setDropTarget] = createSignal<DropTarget | null>(null);
+    let containerRef: HTMLUListElement | undefined;
 
     onMount(() => {
         const updateWidth = (): void => {
@@ -78,6 +86,64 @@ export default function TaskList(props: TaskListProps) {
         (task.completed ? ' task-text--completed' : '') +
         (shouldScroll(task.text) ? ' task-text--scroll' : '');
 
+    const getDropPosition = (event: DragEvent): 'before' | 'after' => {
+        const element = event.currentTarget as HTMLLIElement;
+        const bounds = element.getBoundingClientRect();
+        return event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after';
+    };
+
+    const startDragging = (event: DragEvent, task: Task): void => {
+        event.dataTransfer?.setData('text/plain', String(task.id));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+        setDraggingId(task.id);
+        setDropTarget(null);
+    };
+
+    const updateDropTarget = (event: DragEvent, task: Task): void => {
+        const currentId = draggingId();
+        if (currentId === null || currentId === task.id) {
+            setDropTarget(null);
+            return;
+        }
+
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        setDropTarget({ id: task.id, position: getDropPosition(event) });
+    };
+
+    const finishDragging = (): void => {
+        setDraggingId(null);
+        setDropTarget(null);
+    };
+
+    const dropTask = (event: DragEvent): void => {
+        event.preventDefault();
+
+        const target = dropTarget();
+        const draggedId = draggingId() ?? Number(event.dataTransfer?.getData('text/plain'));
+        if (target && Number.isFinite(draggedId)) {
+            props.reorderTask(draggedId, target.id, target.position);
+            props.click();
+        }
+
+        finishDragging();
+    };
+
+    const allowListDrop = (event: DragEvent): void => {
+        if (draggingId() === null) return;
+
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    };
+
+    const taskRowClass = (task: Task): string => {
+        const target = dropTarget();
+        let className = 'task-row';
+        if (draggingId() === task.id) className += ' task-row--dragging';
+        if (target?.id === task.id) className += ` task-row--drop-${target.position}`;
+        return className;
+    };
+
     return (
         <section class="taskbar">
             <form class="task-form" onSubmit={addTask}>
@@ -91,15 +157,34 @@ export default function TaskList(props: TaskListProps) {
                     <Icon name="plus" size={20} />
                 </button>
             </form>
-            <div
+            <ul
                 class="task-list"
                 ref={(element) => {
                     containerRef = element;
                 }}
+                onDragOver={allowListDrop}
+                onDrop={dropTask}
             >
                 <For each={props.tasks()}>
                     {(task) => (
-                        <div class="task-row">
+                        <li
+                            class={taskRowClass(task)}
+                            onDragOver={(event) => updateDropTarget(event, task)}
+                            onDrop={dropTask}
+                        >
+                            {editingId() !== task.id && (
+                                <button
+                                    type="button"
+                                    class="task-drag-handle"
+                                    draggable="true"
+                                    title="Arrastar tarefa"
+                                    aria-label="Arrastar tarefa"
+                                    onDragStart={(event) => startDragging(event, task)}
+                                    onDragEnd={finishDragging}
+                                >
+                                    <Icon name="grip" size={18} />
+                                </button>
+                            )}
                             {editingId() === task.id ? (
                                 <>
                                     <input
@@ -139,13 +224,6 @@ export default function TaskList(props: TaskListProps) {
                             )}
                             {editingId() !== task.id && (
                                 <div class="task-actions">
-                                    <TaskCheckbox
-                                        task={task}
-                                        onToggle={(id) => {
-                                            props.toggleTask(id);
-                                            props.click();
-                                        }}
-                                    />
                                     <button
                                         class="task-delete-button"
                                         type="button"
@@ -156,12 +234,19 @@ export default function TaskList(props: TaskListProps) {
                                     >
                                         <Icon name="trash" size={16} />
                                     </button>
+                                    <TaskCheckbox
+                                        task={task}
+                                        onToggle={(id) => {
+                                            props.toggleTask(id);
+                                            props.click();
+                                        }}
+                                    />
                                 </div>
                             )}
-                        </div>
+                        </li>
                     )}
                 </For>
-            </div>
+            </ul>
         </section>
     );
 }

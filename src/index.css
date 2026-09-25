@@ -46,7 +46,7 @@ body,
     height: 100%;
     min-height: 100%;
     max-height: 100%;
-    background: transparent;
+    background: var(--bg-0);
 }
 
 body {
@@ -85,8 +85,6 @@ input:focus-visible {
     height: 100%;
     overflow: hidden;
     background: var(--bg-0);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xs);
 }
 
 .window-bar {
@@ -460,9 +458,11 @@ input:focus-visible {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     gap: 10px;
+    list-style: none;
 }
 
 .task-row {
+    position: relative;
     display: flex;
     flex: 0 0 auto;
     flex-direction: row;
@@ -470,6 +470,53 @@ input:focus-visible {
     justify-content: flex-start;
     min-height: 32px;
     gap: 10px;
+}
+
+.task-row::before,
+.task-row::after {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: 2px;
+    content: "";
+    pointer-events: none;
+    background: var(--accent);
+    opacity: 0;
+}
+
+.task-row::before {
+    top: -6px;
+}
+
+.task-row::after {
+    bottom: -6px;
+}
+
+.task-row--drop-before::before,
+.task-row--drop-after::after {
+    opacity: 1;
+}
+
+.task-row--dragging {
+    opacity: 0.45;
+}
+
+.task-drag-handle {
+    display: inline-flex;
+    flex: 0 0 18px;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 30px;
+    padding: 0;
+    color: var(--text-2);
+    background: transparent;
+    border: 0;
+    cursor: grab;
+}
+
+.task-drag-handle:active {
+    cursor: grabbing;
 }
 
 .task-text-container {

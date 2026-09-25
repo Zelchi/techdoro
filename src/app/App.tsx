@@ -45,6 +45,7 @@ export default function App() {
                 deleteTask={tasks.deleteTask}
                 toggleTask={tasks.toggleTask}
                 updateTask={tasks.updateTask}
+                reorderTask={tasks.reorderTask}
                 click={click}
             />
         </main>

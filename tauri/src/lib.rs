@@ -14,6 +14,10 @@ fn show_main_window<R: Runtime, M: Manager<R>>(manager: &M) {
 
 #[cfg(target_os = "linux")]
 fn configure_linux_graphics_backend() {
+    // Disable WebKitGTK's accelerated compositing while investigating
+    // rendering flicker on Linux graphics stacks.
+    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+
     let has_wayland = std::env::var_os("WAYLAND_DISPLAY").is_some();
     let has_xwayland = std::env::var_os("DISPLAY").is_some();
     let has_nvidia = std::path::Path::new("/proc/driver/nvidia/version").exists();

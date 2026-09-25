@@ -1,6 +1,7 @@
 export type IconName =
     | 'check'
     | 'close'
+    | 'grip'
     | 'next'
     | 'pause'
     | 'play'
@@ -38,6 +39,16 @@ export default function Icon(props: IconProps) {
                 <>
                     <path d="M6 6 18 18" />
                     <path d="m18 6-12 12" />
+                </>
+            )}
+            {props.name === 'grip' && (
+                <>
+                    <circle cx="8" cy="7" r="1" />
+                    <circle cx="16" cy="7" r="1" />
+                    <circle cx="8" cy="12" r="1" />
+                    <circle cx="16" cy="12" r="1" />
+                    <circle cx="8" cy="17" r="1" />
+                    <circle cx="16" cy="17" r="1" />
                 </>
             )}
             {props.name === 'next' && (
