@@ -7,7 +7,7 @@ use std::{
 use techdoro::storage::Storage;
 
 pub struct Instance {
-    _lock: File,
+    lock: File,
     activation: PathBuf,
 }
 
@@ -23,10 +23,7 @@ impl Instance {
         match FileExt::try_lock_exclusive(&lock) {
             Ok(()) => {
                 let _ = fs::remove_file(&activation);
-                Ok(Some(Self {
-                    _lock: lock,
-                    activation,
-                }))
+                Ok(Some(Self { lock, activation }))
             }
             Err(error) if error.raw_os_error() == fs2::lock_contended_error().raw_os_error() => {
                 if activate_existing {
@@ -40,6 +37,16 @@ impl Instance {
 
     pub fn take_activation(&self) -> bool {
         fs::remove_file(&self.activation).is_ok()
+    }
+}
+
+impl Drop for Instance {
+    fn drop(&mut self) {
+        // Duplicated or inherited descriptors can outlive this instance.
+        // Explicitly unlock instead of waiting for every descriptor to close.
+        if let Err(error) = FileExt::unlock(&self.lock) {
+            eprintln!("Could not release the instance lock: {error}");
+        }
     }
 }
 
@@ -70,6 +77,29 @@ mod tests {
         let first = Instance::acquire(&storage, true).unwrap().unwrap();
         assert!(Instance::acquire(&storage, false).unwrap().is_none());
         assert!(!first.take_activation());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn dropping_instance_releases_lock_with_a_duplicate_descriptor() {
+        let directory = tempfile::tempdir().unwrap();
+        let storage = Storage {
+            directory: directory.path().to_owned(),
+        };
+        let first = Instance::acquire(&storage, false).unwrap().unwrap();
+        // A concurrently spawned process can inherit the same open file description
+        // between fork and exec. Keep a duplicate alive to reproduce that condition.
+        let duplicate = first.lock.try_clone().unwrap();
+        assert!(Instance::acquire(&storage, false).unwrap().is_none());
+
+        drop(first);
+        let second = Instance::acquire(&storage, false)
+            .unwrap()
+            .expect("Dropping the owner must release its lock immediately");
+        drop(duplicate);
+        assert!(Instance::acquire(&storage, false).unwrap().is_none());
+        drop(second);
+        assert!(Instance::acquire(&storage, false).unwrap().is_some());
     }
 
     #[test]
