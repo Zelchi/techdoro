@@ -1,6 +1,5 @@
 {
     "files.exclude": {
-        "**/.keys": true,
         "**/.fleet": true,
         "**/.idea": true,
         "**/.pytest_cache": true,
@@ -14,7 +13,6 @@
         "**/target": true
     },
     "search.exclude": {
-        "**/.keys": true,
         "**/.fleet": true,
         "**/.idea": true,
         "**/.pytest_cache": true,

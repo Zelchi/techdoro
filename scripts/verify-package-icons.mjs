@@ -4,7 +4,6 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-// Inspect actual PE resources: an icon next to an EXE does not embed it.
 function verifyWindowsIcon(path) {
   const pe = readFileSync(path);
   assert.equal(pe.toString('ascii', 0, 2), 'MZ', path);

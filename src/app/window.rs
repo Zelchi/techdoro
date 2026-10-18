@@ -7,7 +7,6 @@ pub(super) fn show_main(cx: &mut App) {
         return;
     }
     if let Some(handle) = cx.global::<Runtime>().window {
-        // A temporarily borrowed window must never be treated as a closed one.
         if cx.windows().contains(&handle) {
             cx.defer(move |cx| {
                 let _ = handle.update(cx, |_, window, cx| {
