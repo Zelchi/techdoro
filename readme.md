@@ -32,7 +32,7 @@ sudo apt-get update
 sudo apt-get install -y build-essential clang cmake pkg-config \
   libfontconfig1-dev libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev \
   libssl-dev libzstd-dev libasound2-dev libvulkan1 libxkbcommon-dev \
-  patchelf librsvg2-bin file xdg-utils
+  patchelf librsvg2-bin file xdg-utils libarchive-tools desktop-file-utils
 ```
 
 No Fedora, as dependências de desenvolvimento correspondentes incluem:

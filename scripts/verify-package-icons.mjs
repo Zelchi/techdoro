@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { closeSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -40,21 +40,9 @@ function verifyLinuxPackage(path) {
     if (path.endsWith('.deb')) {
       execFileSync('dpkg-deb', ['--extract', path, root], { stdio: 'inherit' });
     } else {
-      const archive = join(root, 'payload.cpio');
-      const output = openSync(archive, 'w');
-      try {
-        execFileSync('rpm2cpio', [path], { stdio: ['ignore', output, 'inherit'] });
-      } finally {
-        closeSync(output);
-      }
-      const input = openSync(archive, 'r');
-      try {
-        execFileSync('cpio', ['--extract', '--make-directories', '--quiet', '--no-absolute-filenames'], {
-          cwd: root, stdio: [input, 'inherit', 'inherit'],
-        });
-      } finally {
-        closeSync(input);
-      }
+      execFileSync('bsdtar', ['--extract', '--file', path, '--directory', root], {
+        stdio: 'inherit',
+      });
     }
     const applications = join(root, 'usr/share/applications');
     assert.deepEqual(readdirSync(applications), ['com.zelchi.techdoro.desktop']);

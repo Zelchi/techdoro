@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y build-essential clang cmake pkg-config \
             libfontconfig1-dev libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev \
             libssl-dev libzstd-dev libasound2-dev libvulkan1 libxkbcommon-dev \
-            patchelf librsvg2-bin file xdg-utils rpm cpio desktop-file-utils
+            patchelf librsvg2-bin file xdg-utils rpm libarchive-tools desktop-file-utils
       - name: Install packager
         run: cargo install cargo-packager --version 0.11.8 --locked
       - name: Install RPM generator
