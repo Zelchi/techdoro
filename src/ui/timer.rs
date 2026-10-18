@@ -7,7 +7,21 @@ use gpui_kit::{
     prelude::FluentBuilder,
     *,
 };
-use std::time::Instant;
+use std::time::{Duration, Instant};
+
+fn timer_text(remaining: Duration, maximum: Duration) -> String {
+    let seconds = remaining.as_secs() + u64::from(remaining.subsec_nanos() > 0);
+    if maximum.as_secs() >= 3600 {
+        format!(
+            "{:02}:{:02}:{:02}",
+            seconds / 3600,
+            seconds / 60 % 60,
+            seconds % 60
+        )
+    } else {
+        format!("{:02}:{:02}", seconds / 60, seconds % 60)
+    }
+}
 
 impl View {
     pub(super) fn session_controls(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
@@ -30,7 +44,6 @@ impl View {
     pub(super) fn timer(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
         let model = self.model.read(cx);
         let remaining = model.timer.remaining(Instant::now());
-        let seconds = remaining.as_secs() + u64::from(remaining.subsec_nanos() > 0);
         let progress =
             (remaining.as_secs_f32() / model.timer.maximum().as_secs_f32()).clamp(0., 1.);
         let running = model.timer.running();
@@ -55,7 +68,7 @@ impl View {
                         div()
                             .text_size(px(48.))
                             .line_height(relative(1.))
-                            .child(format!("{:02}:{:02}", seconds / 60, seconds % 60)),
+                            .child(timer_text(remaining, model.timer.maximum())),
                     )
                     .child(
                         div()
@@ -113,5 +126,33 @@ impl View {
                         )
                     }),
             )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::timer_text;
+    use std::time::Duration;
+
+    #[test]
+    fn clock_format_matches_session_duration_and_stays_stable_during_countdown() {
+        for (remaining, maximum, expected) in [
+            (1500, 1500, "25:00"),
+            (3599, 3599, "59:59"),
+            (3600, 3600, "01:00:00"),
+            (5400, 5400, "01:30:00"),
+            (3599, 5400, "00:59:59"),
+            (0, 5400, "00:00:00"),
+            (86400, 86400, "24:00:00"),
+        ] {
+            assert_eq!(
+                timer_text(Duration::from_secs(remaining), Duration::from_secs(maximum)),
+                expected
+            );
+        }
+        assert_eq!(
+            timer_text(Duration::from_millis(1), Duration::from_secs(5400)),
+            "00:00:01"
+        );
     }
 }

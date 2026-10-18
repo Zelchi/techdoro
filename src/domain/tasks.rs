@@ -45,6 +45,14 @@ impl SavedState {
         }
     }
 
+    pub fn reorder_task(&mut self, id: u64, target: u64) {
+        let source_index = self.tasks.iter().position(|task| task.id == id);
+        let target_index = self.tasks.iter().position(|task| task.id == target);
+        if let (Some(source_index), Some(target_index)) = (source_index, target_index) {
+            self.move_task(id, target, source_index < target_index);
+        }
+    }
+
     pub fn move_task(&mut self, id: u64, target: u64, after: bool) {
         if id == target || !self.tasks.iter().any(|t| t.id == target) {
             return;
@@ -61,6 +69,33 @@ impl SavedState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dropping_tasks_on_rows_preserves_the_destination_in_both_directions() {
+        for (source, target, expected) in [
+            (1, 2, [2, 1, 3, 4]),
+            (1, 3, [2, 3, 1, 4]),
+            (1, 4, [2, 3, 4, 1]),
+            (4, 3, [1, 2, 4, 3]),
+            (4, 2, [1, 4, 2, 3]),
+            (4, 1, [4, 1, 2, 3]),
+            (2, 2, [1, 2, 3, 4]),
+            (5, 2, [1, 2, 3, 4]),
+            (2, 5, [1, 2, 3, 4]),
+        ] {
+            let mut state = SavedState::default();
+            for text in ["One", "Two", "Three", "Four"] {
+                state.add_task(text);
+            }
+            state.reorder_task(source, target);
+            assert_eq!(
+                state.tasks.iter().map(|task| task.id).collect::<Vec<_>>(),
+                expected,
+                "moving {source} onto {target}"
+            );
+        }
+    }
+
     #[test]
     fn tasks_reject_blank_text_and_keep_order() {
         let mut state = SavedState::default();

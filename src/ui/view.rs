@@ -11,6 +11,8 @@ pub struct View {
     pub(super) input: Entity<InputState>,
     pub(super) settings_inputs: [Entity<InputState>; 5],
     pub(super) editing: Option<u64>,
+    pub(super) task_drag: Option<super::tasks::TaskDrag>,
+    pub(super) task_scroll: ScrollHandle,
     pub(super) settings_open: bool,
     _subscriptions: Vec<Subscription>,
 }
@@ -24,14 +26,21 @@ impl View {
             }
         });
         let observe = cx.observe(&model, |_, _, cx| cx.notify());
+        let activation = cx.observe_window_activation(window, |this, window, cx| {
+            if !window.is_window_active() {
+                this.finish_task_drag(cx);
+            }
+        });
         let (settings_inputs, mut subscriptions) =
             super::settings::create_inputs(&model, window, cx);
-        subscriptions.extend([subscription, observe]);
+        subscriptions.extend([subscription, observe, activation]);
         Self {
             model,
             input,
             settings_inputs,
             editing: None,
+            task_drag: None,
+            task_scroll: ScrollHandle::new(),
             settings_open: false,
             _subscriptions: subscriptions,
         }
@@ -52,7 +61,9 @@ impl Render for View {
             .text_size(px(10.))
             .on_key_down(cx.listener(|this, event: &KeyDownEvent, window, cx| {
                 if event.keystroke.key == "escape" {
-                    if this.editing.is_some() {
+                    if this.task_drag.is_some() {
+                        this.finish_task_drag(cx);
+                    } else if this.editing.is_some() {
                         this.cancel_edit(window, cx);
                     } else if this.settings_open {
                         this.toggle_settings(window, cx);
