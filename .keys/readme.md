@@ -31,6 +31,20 @@ a recebe pelo secret `CARGO_PACKAGER_SIGN_PRIVATE_KEY`, com senha opcional em
 `CARGO_PACKAGER_SIGN_PRIVATE_KEY_PASSWORD`. Ele também aceita os secrets antigos
 `TAURI_SIGNING_PRIVATE_KEY` e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
-Este README não contém nem define onde existe uma cópia local da chave privada.
-Nunca adicione uma chave privada ao repositório. O `.gitignore` permite nesta pasta
-apenas os três fixtures e este README.
+## Arquivos locais para configurar o GitHub Actions
+
+Quando gerados localmente, estes arquivos permanecem ignorados pelo Git:
+
+| Arquivo local | Uso no GitHub Actions |
+| --- | --- |
+| `.keys/techdoro.key` | Copiar o conteúdo inteiro para `CARGO_PACKAGER_SIGN_PRIVATE_KEY`. |
+| `.keys/techdoro-password.txt` | Copiar a senha para `CARGO_PACKAGER_SIGN_PRIVATE_KEY_PASSWORD`. |
+| `.keys/techdoro.key.pub` | Cópia local da chave pública correspondente a `assets/updater.pub`. |
+
+Os dois primeiros arquivos são secretos e não devem ser enviados ao GitHub como
+arquivos do repositório. Os nomes dos secrets e dos arquivos não são secretos.
+Se `TECHDORO_UPDATER_PUBLIC_KEY` estiver configurada nas variáveis do repositório,
+seu valor deve corresponder a `assets/updater.pub`, ou a variável deve ser removida
+para usar a chave pública versionada.
+
+O `.gitignore` permite nesta pasta apenas os três fixtures e este README.
