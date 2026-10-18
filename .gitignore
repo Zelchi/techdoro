@@ -7,6 +7,7 @@
 !/.keys/update.pub
 !/.keys/update.txt
 !/.keys/update.txt.sig
+!/.keys/readme.md
 
 # Local secrets and environment overrides
 .env
