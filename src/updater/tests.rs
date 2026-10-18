@@ -16,6 +16,15 @@ fn manifest(version: &str) -> LinuxManifest {
 }
 
 #[test]
+fn windows_installer_is_configured_to_relaunch_after_installation() {
+    let config = super::native::native_config().unwrap();
+    let mode = config.windows.unwrap().install_mode.unwrap();
+    let arguments = mode.nsis_args();
+    assert!(arguments.contains(&"/P"));
+    assert!(arguments.contains(&"/R"));
+}
+
+#[test]
 fn selects_only_the_installed_format_and_a_newer_version() {
     let current = Version::parse("4.0.0").unwrap();
     let update = select_linux_update(manifest("v4.1.0"), PackageFormat::Rpm, &current, "x86_64")

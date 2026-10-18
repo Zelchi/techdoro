@@ -9,6 +9,9 @@ use gpui_kit::*;
 use std::{rc::Rc, time::Duration};
 
 pub(super) fn start(startup: Startup) -> Result<()> {
+    // Package upgrades replace the running executable on Linux. Capture its path
+    // before that happens so restart never resolves a path ending in " (deleted)".
+    let restart_path = std::env::current_exe()?;
     let Startup {
         saved,
         storage,
@@ -17,6 +20,7 @@ pub(super) fn start(startup: Startup) -> Result<()> {
     let instance = Rc::new(instance);
     application().with_assets(assets::Assets).run(move |cx| {
         gpui_kit::init(cx);
+        cx.set_restart_path(restart_path);
         cx.set_app_identity("com.zelchi.techdoro", "Techdoro");
         cx.set_quit_mode(QuitMode::Explicit);
         crate::ui::init_theme(cx);

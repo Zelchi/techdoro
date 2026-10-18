@@ -17,18 +17,25 @@ impl View {
             model.update_status.clone()
         };
         div()
+            .h(px(30.))
+            .min_h(px(30.))
+            .max_h(px(30.))
             .flex_shrink_0()
             .flex()
             .items_center()
             .justify_between()
             .gap(px(SPACING))
-            .p(px(SPACING))
+            .px(px(SPACING))
+            .py(px(SPACING_SMALL))
             .border_t_1()
             .border_color(rgb(BORDER))
             .child(
                 div()
                     .flex_1()
+                    .min_w_0()
                     .text_size(px(8.))
+                    .line_height(px(13.))
+                    .text_ellipsis()
                     .text_color(rgb(0x888888))
                     .child(if update_status.is_empty() {
                         format!("v{}", env!("CARGO_PKG_VERSION"))
@@ -42,7 +49,14 @@ impl View {
                         .when(!update_busy && !running, |button| button.cursor_pointer())
                         .rounded(px(0.))
                         .small()
-                        .label("Update")
+                        .h(px(20.))
+                        .accessibility_label("Update")
+                        .child(
+                            div()
+                                .text_size(px(8.))
+                                .line_height(relative(1.))
+                                .child("Update"),
+                        )
                         .disabled(update_busy || running)
                         .on_click(cx.listener(|this, _, _, cx| {
                             this.model.read(cx).click();
