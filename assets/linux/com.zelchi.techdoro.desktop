@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Techdoro
+Comment=A native Pomodoro timer with a task list
+Exec=techdoro
+Icon=techdoro
+Terminal=false
+Categories=Utility;
+StartupWMClass=com.zelchi.techdoro
+X-GNOME-UsesNotifications=true

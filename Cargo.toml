@@ -1,0 +1,72 @@
+[package]
+name = "techdoro"
+version = "4.0.0"
+edition = "2024"
+rust-version = "1.92"
+description = "A native Pomodoro timer with a task list for your desktop"
+authors = ["Zelchi"]
+license = "MIT"
+repository = "https://github.com/Zelchi/Techdoro"
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+cargo-packager-updater = "=0.2.3"
+directories = "6"
+fs2 = "0.4"
+gpui-kit = "=0.7.3"
+gpui-tray = { version = "=0.1.4", default-features = false, features = ["gpui-kit", "menu-state"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
+notify-rust = "4"
+minisign-verify = "0.2.5"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls-native-roots"] }
+rodio = { version = "0.20", default-features = false, features = ["symphonia-mp3"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+
+[build-dependencies]
+embed-resource = "3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[package.metadata.packager]
+formats = ["deb"]
+product-name = "Techdoro"
+identifier = "com.zelchi.techdoro"
+category = "Utility"
+publisher = "Zelchi"
+homepage = "https://github.com/Zelchi/Techdoro"
+icons = ["assets/linux/256x256.png", "assets/icon.ico"]
+resources = ["LICENSE", "assets/PressStart2P-OFL.txt"]
+out-dir = "target/packages"
+before-packaging-command = "cargo build --release --locked"
+
+[package.metadata.packager.nsis]
+installer-icon = "assets/icon.ico"
+
+[package.metadata.packager.linux]
+generate-desktop-entry = false
+
+[package.metadata.packager.deb]
+depends = ["libc6 (>= 2.39)", "libgcc-s1", "libxcb1", "libasound2t64", "libfontconfig1", "libxkbcommon0", "libxkbcommon-x11-0", "libx11-xcb1", "libwayland-client0", "libvulkan1", "libssl3t64", "pkexec", "polkitd"]
+
+[package.metadata.packager.deb.files]
+"assets/linux/com.zelchi.techdoro.desktop" = "/usr/share/applications/com.zelchi.techdoro.desktop"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/techdoro", dest = "/usr/bin/techdoro", mode = "755" },
+    { source = "assets/linux/com.zelchi.techdoro.desktop", dest = "/usr/share/applications/com.zelchi.techdoro.desktop", mode = "644" },
+    { source = "assets/linux/256x256.png", dest = "/usr/share/icons/hicolor/256x256/apps/techdoro.png", mode = "644" },
+    { source = "LICENSE", dest = "/usr/share/licenses/techdoro/LICENSE", mode = "644" },
+    { source = "assets/PressStart2P-OFL.txt", dest = "/usr/share/licenses/techdoro/PressStart2P-OFL.txt", mode = "644" },
+]
+
+[package.metadata.generate-rpm.requires]
+"libvulkan.so.1()(64bit)" = "*"
+polkit = "*"
+dnf = "*"

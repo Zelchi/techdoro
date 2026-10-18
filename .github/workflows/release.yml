@@ -2,149 +2,128 @@ name: release
 
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  frontend:
-    name: check
-    runs-on: ubuntu-22.04
+  checks:
+    uses: ./.github/workflows/ci.yml
 
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-
-      - name: node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: yarn
-          cache-dependency-path: yarn.lock
-
-      - name: yarn
-        run: corepack enable
-
-      - name: deps
-        run: yarn install --frozen-lockfile --ignore-engines
-
-      - name: check
-        run: yarn run check
-
-  publish-tauri:
-    name: build
-    needs: frontend
+  package:
+    needs: checks
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            args: ""
-          - platform: windows-latest
-            target: x86_64-pc-windows-msvc
-            args: ""
-
-    runs-on: ${{ matrix.platform }}
-
+          - os: ubuntu-24.04
+            platform: linux-x86_64
+            formats: deb
+            binary: target/release/techdoro
+          - os: windows-latest
+            platform: windows-x86_64
+            formats: nsis
+            binary: target/release/techdoro.exe
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-
-      - name: node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
         with:
-          node-version: lts/*
-          cache: yarn
-          cache-dependency-path: yarn.lock
-
-      - name: yarn
-        run: corepack enable
-
-      - name: rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: cache
-        uses: actions/cache@v4
+          key: release
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            ~/.cache/tauri
-            tauri/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('tauri/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.target }}-cargo-
-
-      - name: linux deps
-        if: matrix.platform == 'ubuntu-22.04'
+          node-version: "22"
+      - name: Validate release version and notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/release.mjs validate-tag "$RELEASE_TAG"
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            curl \
-            file \
-            libayatana-appindicator3-dev \
-            libssl-dev \
-            libwebkit2gtk-4.1-dev \
-            libxdo-dev \
-            librsvg2-dev \
-            patchelf \
-            wget \
-            xdg-utils
-
-      - name: deps
-        run: yarn install --frozen-lockfile --ignore-engines
-
-      - name: version
-        id: release_version
+          sudo apt-get install -y build-essential clang cmake pkg-config \
+            libfontconfig1-dev libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev \
+            libssl-dev libzstd-dev libasound2-dev libvulkan1 libxkbcommon-dev \
+            patchelf librsvg2-bin file xdg-utils rpm cpio desktop-file-utils
+      - name: Install packager
+        run: cargo install cargo-packager --version 0.11.8 --locked
+      - name: Install RPM generator
+        if: runner.os == 'Linux'
+        run: cargo install cargo-generate-rpm --version 0.21.0 --locked
+      - name: Build signed installers
         shell: bash
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: release notes
-        id: release_notes
-        shell: bash
+        env:
+          CARGO_PACKAGER_SIGN_PRIVATE_KEY: ${{ secrets.CARGO_PACKAGER_SIGN_PRIVATE_KEY || secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARGO_PACKAGER_SIGN_PRIVATE_KEY_PASSWORD: ${{ secrets.CARGO_PACKAGER_SIGN_PRIVATE_KEY_PASSWORD || secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TECHDORO_UPDATER_PUBLIC_KEY: ${{ vars.TECHDORO_UPDATER_PUBLIC_KEY }}
         run: |
-          notes_file=".github/release-notes/${GITHUB_REF_NAME}.md"
-          if [[ ! -f "$notes_file" ]]; then
-            echo "::error::Arquivo de notas não encontrado: $notes_file"
+          set -euo pipefail
+          if [[ -z "$CARGO_PACKAGER_SIGN_PRIVATE_KEY" ]]; then
+            echo "::error::Configure CARGO_PACKAGER_SIGN_PRIVATE_KEY before publishing."
             exit 1
           fi
-
-          {
-            echo "body<<RELEASE_NOTES"
-            cat "$notes_file"
-            echo "RELEASE_NOTES"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: build
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          if [[ -z "$TECHDORO_UPDATER_PUBLIC_KEY" ]]; then
+            unset TECHDORO_UPDATER_PUBLIC_KEY
+          fi
+          cargo packager --release --formats "${{ matrix.formats }}"
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            cargo generate-rpm -o target/packages
+            for rpm_file in target/packages/*.rpm; do
+              cargo packager signer sign "$rpm_file"
+            done
+          fi
+      - name: Verify packaged launchers and icons
+        run: node scripts/verify-package-icons.mjs
+      - name: Stage signed artifacts
+        run: node scripts/release.mjs stage "${{ matrix.platform }}" --verify "${{ matrix.binary }}"
+      - uses: actions/upload-artifact@v4
         with:
-          projectPath: .
-          tauriScript: yarn tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: Techdoro ${{ steps.release_version.outputs.version }}
-          releaseBody: ${{ steps.release_notes.outputs.body }}
-          releaseDraft: true
-          prerelease: false
-          uploadUpdaterJson: true
-          retryAttempts: 2
-          args: --config tauri/tauri.conf.json ${{ matrix.args }}
+          name: ${{ matrix.platform }}
+          path: target/release-assets/*
+          if-no-files-found: error
 
-  publish-release:
-    name: release
-    needs: publish-tauri
-    runs-on: ubuntu-22.04
-
+  publish:
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
-      - name: publish
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Generate updater manifest
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/release.mjs manifest "$GITHUB_REPOSITORY" "$RELEASE_TAG"
+      - name: Publish complete release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${GITHUB_REF_NAME}" --draft=false --repo "${GITHUB_REPOSITORY}"
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            draft=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+            if [[ "$draft" != true ]]; then
+              echo "::error::Refusing to replace an already published release."
+              exit 1
+            fi
+          else
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft \
+              --title "Techdoro ${RELEASE_TAG#v}" --notes-file ".github/release-notes/$RELEASE_TAG.md"
+          fi
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            release-assets/*.deb release-assets/*.rpm release-assets/*.exe \
+            release-assets/*.sig release-assets/native-latest.json
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest

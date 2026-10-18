@@ -1,10 +1,30 @@
 {
     "files.exclude": {
+        "**/.keys": true,
+        "**/.fleet": true,
+        "**/.idea": true,
+        "**/.pytest_cache": true,
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/venv": true,
+        "**/dist": true,
+        "**/keys": true,
         "**/node_modules": true,
-        "**/dist": true
+        "**/packaging": true,
+        "**/target": true
     },
     "search.exclude": {
+        "**/.keys": true,
+        "**/.fleet": true,
+        "**/.idea": true,
+        "**/.pytest_cache": true,
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/venv": true,
+        "**/dist": true,
+        "**/keys": true,
         "**/node_modules": true,
-        "**/dist": true
+        "**/packaging": true,
+        "**/target": true
     }
 }

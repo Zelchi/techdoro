@@ -1,7 +1,30 @@
-node_modules/
-dist/
-tauri/target/
-tauri/gen/
-tauri/key/
-.tauri/
+/target/
+/node_modules/
+/dist/
+/packaging/
+/keys/
+/.keys/*
+!/.keys/update.pub
+!/.keys/update.txt
+!/.keys/update.txt.sig
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Editor, OS, and temporary files
+/.idea/
+/.fleet/
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs, coverage, and profiling output
+*.log
+*.log.*
+/.coverage
+/coverage/
+*.profraw
