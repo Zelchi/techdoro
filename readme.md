@@ -192,8 +192,10 @@ retomada, ciclos, transições, alteração das durações, tarefas e persistên
 scripts de release têm testes para manifestos, formatos e artefatos ausentes.
 O atualizador testa seleção de formato/versão, rejeição de HTTP, assinatura válida,
 pacote adulterado e argumentos dos comandos de instalação.
-O CI executa as verificações Rust em Linux e Windows; testes de interface, áudio,
-bandeja e instalação precisam também de uma sessão desktop real.
+O CI executa as verificações Rust em Linux e Windows. O workflow de release instala
+o `.deb` no Ubuntu 24.04 e Debian 13 e o `.rpm` no Fedora, verificando a versão do
+executável instalado. Interface, áudio, bandeja e atualização com sessão gráfica
+continuam exigindo teste manual em desktop.
 
 ## Pacotes
 
@@ -209,8 +211,11 @@ Os pacotes são gerados em `target/packages`. No CI, os pacotes Linux são
 compilados no Ubuntu 24.04; o RPM usa o mesmo binário e descobre as dependências
 ELF automaticamente. O instalador Windows é compilado no runner Windows. Builds
 locais dependem das versões das bibliotecas do sistema usado na compilação.
-Para distribuir o `.deb`, use o build do Ubuntu 24.04 do CI: um binário compilado
-em um Fedora mais recente pode exigir uma glibc ausente no Ubuntu.
+O `.deb` do CI é compatível com Ubuntu 24.04 ou mais recente e Debian 13 ou mais
+recente. Ele declara `libc6 (>= 2.39)`, `libasound2t64` e `libssl3t64`; Ubuntu
+22.04 e Debian 12 não atendem a esses requisitos. Para Ubuntu mais antigo, seria
+necessário gerar um pacote separado a partir de uma base de build mais antiga.
+O `.rpm` é validado no Fedora atual pelo smoke test de release.
 
 Os dois pacotes Linux incluem `com.zelchi.techdoro.desktop` e o ícone PNG em
 `/usr/share/icons/hicolor/256x256/apps/techdoro.png`. O identificador do atalho
@@ -224,7 +229,7 @@ Para instalar os pacotes Linux, use o gerenciador de pacotes para resolver as
 dependências:
 
 ```sh
-sudo apt install ./target/packages/techdoro_*.deb   # Ubuntu/Debian
+sudo apt install ./target/packages/techdoro_*.deb   # Ubuntu 24.04+ / Debian 13+
 sudo dnf install ./target/packages/techdoro-*.rpm   # Fedora
 ```
 
@@ -249,8 +254,8 @@ O Linux precisa de Polkit, de um agente de autenticação ativo na sessão deskt
 do gerenciador de pacotes correspondente. Os instaladores declaram essas
 dependências. Builds executados por `cargo run` não tentam instalar pacotes no
 sistema; a atualização integrada é habilitada para o executável pertencente ao
-pacote Techdoro instalado. A versão atual suporta Ubuntu/Debian via APT e Fedora
-via DNF. Somente `.deb`, `.rpm` e `.exe` são distribuídos.
+pacote Techdoro instalado. A versão atual suporta Ubuntu 24.04+ e Debian 13+ via
+APT, e Fedora via DNF. Somente `.deb`, `.rpm` e `.exe` são distribuídos.
 
 O manifesto `native-latest.json` é separado do `latest.json` da versão Tauri.
 Não substitua o manifesto antigo por pacotes novos esperando migração automática.

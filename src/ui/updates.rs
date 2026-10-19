@@ -1,6 +1,6 @@
 use super::{style::*, view::View};
 use gpui_kit::{
-    component::{Disableable, Sizable, button::Button},
+    component::{Disableable, FocusableExt, Sizable, button::Button},
     prelude::FluentBuilder,
     *,
 };
@@ -46,6 +46,7 @@ impl View {
             .when(update_available, |footer| {
                 footer.child(
                     Button::new("update")
+                        .focus_ring(false)
                         .when(!update_busy && !running, |button| button.cursor_pointer())
                         .rounded(px(0.))
                         .small()

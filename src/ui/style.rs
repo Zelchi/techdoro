@@ -1,5 +1,5 @@
 use gpui_kit::{
-    component::{IconName, Sizable, button::Button},
+    component::{FocusableExt, IconName, Sizable, button::Button},
     *,
 };
 use std::sync::{Arc, OnceLock};
@@ -7,7 +7,7 @@ use std::sync::{Arc, OnceLock};
 pub(super) const BG: u32 = 0x0a0a0a;
 pub(super) const PANEL: u32 = 0x121212;
 pub(super) const BORDER: u32 = 0x2b2b2b;
-pub(super) const ORANGE: u32 = 0xffa500;
+pub(super) const ORANGE: u32 = 0xff6a00;
 pub(super) const TEXT: u32 = 0xe6e6e6;
 pub(super) const SPACING: f32 = 8.;
 pub(super) const SPACING_SMALL: f32 = 4.;
@@ -26,6 +26,7 @@ pub(super) fn application_icon() -> Arc<Image> {
 
 pub(super) fn icon_button(id: impl Into<ElementId>, icon: IconName, edge: f32) -> Button {
     Button::new(id)
+        .focus_ring(false)
         .cursor_pointer()
         .small()
         .size(px(edge))

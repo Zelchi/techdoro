@@ -17,10 +17,10 @@ pub(crate) fn init_theme(cx: &mut App) {
     let theme = Theme::global_mut(cx);
     theme.radius = px(0.);
     theme.radius_lg = px(0.);
-    theme.primary = rgb(0xffa500).into();
+    theme.primary = rgb(0xff6a00).into();
     theme.primary_foreground = rgb(0x0a0a0a).into();
-    theme.primary_hover = rgb(0xff8c00).into();
-    theme.primary_active = rgb(0xe07800).into();
+    theme.primary_hover = rgb(0xf05e00).into();
+    theme.primary_active = rgb(0xd95300).into();
     theme.button_primary = theme.primary;
     theme.button_primary_foreground = theme.primary_foreground;
     theme.button_primary_hover = theme.primary_hover;

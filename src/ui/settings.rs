@@ -9,24 +9,65 @@ use gpui_kit::{
 };
 use techdoro::domain::Settings;
 
-const LABELS: [&str; 5] = ["Volume", "Focus", "Short Break", "Long Break", "Cycles"];
-
-fn values(settings: &Settings) -> [u32; 5] {
-    [
-        settings.volume,
-        settings.focus_minutes,
-        settings.short_break_minutes,
-        settings.long_break_minutes,
-        settings.cycles_before_long_break,
-    ]
+#[derive(Clone, Copy)]
+enum SettingField {
+    Volume,
+    FocusMinutes,
+    ShortBreakMinutes,
+    LongBreakMinutes,
+    CyclesBeforeLongBreak,
 }
+
+impl SettingField {
+    const ALL: [Self; 5] = [
+        Self::Volume,
+        Self::FocusMinutes,
+        Self::ShortBreakMinutes,
+        Self::LongBreakMinutes,
+        Self::CyclesBeforeLongBreak,
+    ];
+
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Volume => "Volume",
+            Self::FocusMinutes => "Focus",
+            Self::ShortBreakMinutes => "Short Break",
+            Self::LongBreakMinutes => "Long Break",
+            Self::CyclesBeforeLongBreak => "Cycles",
+        }
+    }
+
+    const fn value(self, settings: &Settings) -> u32 {
+        match self {
+            Self::Volume => settings.volume,
+            Self::FocusMinutes => settings.focus_minutes,
+            Self::ShortBreakMinutes => settings.short_break_minutes,
+            Self::LongBreakMinutes => settings.long_break_minutes,
+            Self::CyclesBeforeLongBreak => settings.cycles_before_long_break,
+        }
+    }
+
+    fn set(self, settings: &mut Settings, value: u32) {
+        match self {
+            Self::Volume => settings.volume = value,
+            Self::FocusMinutes => settings.focus_minutes = value,
+            Self::ShortBreakMinutes => settings.short_break_minutes = value,
+            Self::LongBreakMinutes => settings.long_break_minutes = value,
+            Self::CyclesBeforeLongBreak => settings.cycles_before_long_break = value,
+        }
+    }
+}
+
+pub(super) const INPUT_COUNT: usize = SettingField::ALL.len();
 
 pub(super) fn create_inputs(
     model: &Entity<Model>,
     window: &mut Window,
     cx: &mut Context<View>,
-) -> ([Entity<InputState>; 5], Vec<Subscription>) {
-    let inputs = values(&model.read(cx).saved.settings).map(|value| {
+) -> ([Entity<InputState>; INPUT_COUNT], Vec<Subscription>) {
+    let settings = model.read(cx).saved.settings.clone();
+    let inputs = SettingField::ALL.map(|field| {
+        let value = field.value(&settings);
         cx.new(|cx| {
             InputState::new(window, cx)
                 .default_value(value.to_string())
@@ -62,24 +103,29 @@ impl View {
             .bg(rgb(PANEL))
             .border_1()
             .border_color(rgb(BORDER))
-            .children(LABELS.into_iter().enumerate().map(|(index, label)| {
-                div()
-                    .h(px(24.))
-                    .flex_shrink_0()
-                    .flex()
-                    .items_center()
-                    .justify_between()
-                    .gap(px(SPACING_SMALL))
-                    .child(label)
-                    .child(
-                        Input::new(&self.settings_inputs[index])
-                            .aria_label(label)
-                            .small()
-                            .w(px(88.))
-                            .text_align(TextAlign::Center)
-                            .focus_bordered(false),
-                    )
-            }))
+            .children(
+                SettingField::ALL
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, field)| {
+                        div()
+                            .h(px(24.))
+                            .flex_shrink_0()
+                            .flex()
+                            .items_center()
+                            .justify_between()
+                            .gap(px(SPACING_SMALL))
+                            .child(field.label())
+                            .child(
+                                Input::new(&self.settings_inputs[index])
+                                    .aria_label(field.label())
+                                    .small()
+                                    .w(px(88.))
+                                    .text_align(TextAlign::Center)
+                                    .focus_bordered(false),
+                            )
+                    }),
+            )
     }
 
     pub(super) fn toggle_settings(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -97,27 +143,15 @@ impl View {
 
     fn save_settings(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let previous = self.model.read(cx).saved.settings.clone();
-        let previous_values = values(&previous);
-        let [
-            volume,
-            focus_minutes,
-            short_break_minutes,
-            long_break_minutes,
-            cycles_before_long_break,
-        ] = std::array::from_fn(|index| {
-            self.settings_inputs[index]
+        let mut settings = previous.clone();
+        for (field, input) in SettingField::ALL.into_iter().zip(&self.settings_inputs) {
+            let value = input
                 .read(cx)
                 .value()
                 .parse::<u32>()
-                .unwrap_or(previous_values[index])
-        });
-        let mut settings = Settings {
-            volume,
-            focus_minutes,
-            short_break_minutes,
-            long_break_minutes,
-            cycles_before_long_break,
-        };
+                .unwrap_or_else(|_| field.value(&previous));
+            field.set(&mut settings, value);
+        }
         settings.normalize();
         if settings != previous {
             self.model.update(cx, |model, cx| {
@@ -125,8 +159,8 @@ impl View {
                 model.settings_changed(cx);
             });
         }
-        for (input, value) in self.settings_inputs.iter().zip(values(&settings)) {
-            let text = value.to_string();
+        for (field, input) in SettingField::ALL.into_iter().zip(&self.settings_inputs) {
+            let text = field.value(&settings).to_string();
             if input.read(cx).value().as_str() != text {
                 input.update(cx, |input, cx| input.set_value(text, window, cx));
             }

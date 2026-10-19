@@ -9,7 +9,7 @@ use gpui_kit::{
 pub struct View {
     pub(super) model: Entity<Model>,
     pub(super) input: Entity<InputState>,
-    pub(super) settings_inputs: [Entity<InputState>; 5],
+    pub(super) settings_inputs: [Entity<InputState>; super::settings::INPUT_COUNT],
     pub(super) editing: Option<u64>,
     pub(super) task_drag: Option<super::task_drag::TaskDrag>,
     pub(super) task_scroll: ScrollHandle,

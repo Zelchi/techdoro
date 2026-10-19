@@ -12,12 +12,13 @@ enum AudioCommand {
 }
 
 pub struct Audio {
-    sender: mpsc::SyncSender<AudioCommand>,
+    sender: mpsc::Sender<AudioCommand>,
 }
 
 impl Audio {
     pub fn new() -> Self {
-        let (sender, receiver) = mpsc::sync_channel::<AudioCommand>(32);
+        // Sending audio commands must never block the UI or silently drop an alarm.
+        let (sender, receiver) = mpsc::channel::<AudioCommand>();
         std::thread::spawn(move || {
             let mut output = None;
             let mut sinks: Vec<rodio::Sink> = Vec::new();
@@ -75,11 +76,11 @@ impl Audio {
 
     pub fn play(&self, sound: Sound, volume: u32) {
         if volume > 0 {
-            let _ = self.sender.try_send(AudioCommand::Play(sound, volume));
+            let _ = self.sender.send(AudioCommand::Play(sound, volume));
         }
     }
 
     pub fn set_volume(&self, volume: u32) {
-        let _ = self.sender.try_send(AudioCommand::Volume(volume));
+        let _ = self.sender.send(AudioCommand::Volume(volume));
     }
 }

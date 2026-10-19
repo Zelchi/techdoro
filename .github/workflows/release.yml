@@ -79,6 +79,9 @@ jobs:
               cargo packager signer sign "$rpm_file"
             done
           fi
+      - name: Smoke-test Linux package installation
+        if: runner.os == 'Linux'
+        run: node scripts/smoke-linux-packages.mjs
       - name: Verify packaged launchers and icons
         run: node scripts/verify-package-icons.mjs
       - name: Stage signed artifacts

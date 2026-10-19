@@ -1,7 +1,7 @@
 use super::{style::*, view::View};
 use gpui_kit::{
     component::{
-        Disableable, IconName,
+        Disableable, FocusableExt, IconName,
         button::{Button, ButtonVariants},
     },
     prelude::FluentBuilder,
@@ -90,6 +90,7 @@ impl View {
                     .mt(px(SPACING * 2.))
                     .child(
                         Button::new("toggle")
+                            .focus_ring(false)
                             .when(!installing_update, |button| button.cursor_pointer())
                             .w_full()
                             .h(px(40.))
