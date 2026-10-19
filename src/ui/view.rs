@@ -11,7 +11,7 @@ pub struct View {
     pub(super) input: Entity<InputState>,
     pub(super) settings_inputs: [Entity<InputState>; 5],
     pub(super) editing: Option<u64>,
-    pub(super) task_drag: Option<super::tasks::TaskDrag>,
+    pub(super) task_drag: Option<super::task_drag::TaskDrag>,
     pub(super) task_scroll: ScrollHandle,
     pub(super) settings_open: bool,
     _subscriptions: Vec<Subscription>,

@@ -70,6 +70,15 @@ impl Timer {
         }
     }
 
+    pub fn toggle_unless_finished(&mut self, settings: &Settings, now: Instant) -> Option<Session> {
+        if let Some(finished) = self.tick(settings, now) {
+            Some(finished)
+        } else {
+            self.toggle(now);
+            None
+        }
+    }
+
     fn pause(&mut self, now: Instant) {
         self.remaining[self.session.index()] = self.remaining(now);
         self.started_at = None;
@@ -94,9 +103,16 @@ impl Timer {
     pub fn configure(&mut self, settings: &Settings, now: Instant) {
         let was_running = self.running();
         self.pause(now);
+        let previous_maximum = self.maximum;
         self.maximum = settings.durations();
-        for (remaining, maximum) in self.remaining.iter_mut().zip(self.maximum) {
-            *remaining = (*remaining).min(maximum);
+        for ((remaining, previous_maximum), maximum) in self
+            .remaining
+            .iter_mut()
+            .zip(previous_maximum)
+            .zip(self.maximum)
+        {
+            let elapsed = previous_maximum.saturating_sub(*remaining);
+            *remaining = maximum.saturating_sub(elapsed);
         }
         if was_running {
             self.started_at = Some(now);
@@ -199,8 +215,67 @@ mod tests {
         timer.configure(&settings, now + Duration::from_secs(10));
         assert_eq!(
             timer.remaining(now + Duration::from_secs(15)),
-            Duration::from_secs(55)
+            Duration::from_secs(45)
         );
         assert!(timer.running());
+    }
+
+    #[test]
+    fn increasing_a_running_session_preserves_elapsed_time() {
+        let mut settings = Settings::default();
+        let mut timer = Timer::new(&settings);
+        let now = Instant::now();
+        timer.toggle(now);
+        settings.focus_minutes = 60;
+
+        timer.configure(&settings, now + Duration::from_secs(10));
+
+        assert_eq!(timer.maximum(), Duration::from_secs(3600));
+        assert_eq!(
+            timer.remaining(now + Duration::from_secs(15)),
+            Duration::from_secs(3585)
+        );
+        assert!(timer.running());
+    }
+
+    #[test]
+    fn changing_settings_updates_full_paused_sessions() {
+        let mut settings = Settings::default();
+        let mut timer = Timer::new(&settings);
+        let now = Instant::now();
+        settings.focus_minutes = 30;
+        settings.short_break_minutes = 10;
+        settings.long_break_minutes = 20;
+
+        timer.configure(&settings, now);
+        assert_eq!(timer.remaining(now), Duration::from_secs(1800));
+        assert_eq!(timer.maximum(), Duration::from_secs(1800));
+
+        timer.next(now);
+        assert_eq!(timer.remaining(now), Duration::from_secs(600));
+        assert_eq!(timer.maximum(), Duration::from_secs(600));
+
+        timer.next(now);
+        assert_eq!(timer.remaining(now), Duration::from_secs(1200));
+        assert_eq!(timer.maximum(), Duration::from_secs(1200));
+    }
+
+    #[test]
+    fn clicking_at_the_deadline_finishes_without_starting_next_session() {
+        let settings = Settings::default();
+        let mut timer = Timer::new(&settings);
+        let now = Instant::now();
+        timer.toggle(now);
+
+        assert_eq!(
+            timer.toggle_unless_finished(&settings, now + Duration::from_secs(1500)),
+            Some(Session::Focus)
+        );
+        assert_eq!(timer.session, Session::ShortBreak);
+        assert!(!timer.running());
+        assert_eq!(
+            timer.remaining(now + Duration::from_secs(1500)),
+            Duration::from_secs(300)
+        );
     }
 }

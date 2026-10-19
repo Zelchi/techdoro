@@ -55,16 +55,34 @@ pub fn check(sender: mpsc::Sender<UpdateMessage>) {
 
 pub fn install(update: AvailableUpdate, sender: mpsc::Sender<UpdateMessage>) {
     std::thread::spawn(move || {
-        let result = match update {
-            AvailableUpdate::Native(update) => {
-                update.download_and_install().map_err(anyhow::Error::from)
-            }
-            AvailableUpdate::Linux(update) => install_linux(update, &sender),
-        };
+        let result = install_safely(update, &sender);
         let message = match result {
             Ok(()) => UpdateMessage::Installed,
             Err(error) => UpdateMessage::InstallFailed(error.to_string()),
         };
         let _ = sender.send(message);
     });
+}
+
+fn install_safely(
+    update: AvailableUpdate,
+    sender: &mpsc::Sender<UpdateMessage>,
+) -> anyhow::Result<()> {
+    catch_installer_panic(|| match update {
+        AvailableUpdate::Native(update) => {
+            update.download_and_install().map_err(anyhow::Error::from)
+        }
+        AvailableUpdate::Linux(update) => install_linux(update, sender),
+    })
+}
+
+fn catch_installer_panic(install: impl FnOnce() -> anyhow::Result<()>) -> anyhow::Result<()> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(install)).map_err(|payload| {
+        let message = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&'static str>().copied())
+            .unwrap_or("unknown panic");
+        anyhow::anyhow!("Updater panicked while installing: {message}")
+    })?
 }

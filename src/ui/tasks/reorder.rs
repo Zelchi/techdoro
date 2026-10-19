@@ -1,4 +1,8 @@
-pub(super) fn insertion_index(top: f32, heights: impl Iterator<Item = f32>, gap: f32) -> usize {
+pub(in crate::ui) fn insertion_index(
+    top: f32,
+    heights: impl Iterator<Item = f32>,
+    gap: f32,
+) -> usize {
     let mut nearest = 0;
     let mut distance = top.abs();
     let mut slot_top = 0.;

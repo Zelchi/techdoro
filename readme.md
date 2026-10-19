@@ -224,8 +224,8 @@ Para instalar os pacotes Linux, use o gerenciador de pacotes para resolver as
 dependências:
 
 ```sh
-sudo apt install ./techdoro_4.0.0_amd64.deb   # Ubuntu/Debian
-sudo dnf install ./techdoro-4.0.0-1.x86_64.rpm # Fedora
+sudo apt install ./target/packages/techdoro_*.deb   # Ubuntu/Debian
+sudo dnf install ./target/packages/techdoro-*.rpm   # Fedora
 ```
 
 ## Atualizações e releases
@@ -234,7 +234,7 @@ O aplicativo verifica atualizações ao iniciar. O botão Update aparece somente
 quando uma versão mais recente está disponível. Pause o timer e clique em Update
 para baixar e instalar; a verificação inicial apenas consulta a disponibilidade.
 Se a instalação falhar, o botão permite tentar novamente. A bandeja também oferece
-uma verificação manual em Check for updates. Todos os pacotes são validados por
+uma verificação manual ao selecionar Update. Todos os pacotes são validados por
 assinatura Minisign antes da instalação. O download e a instalação acontecem fora
 da thread de interface, sem precisar buscar instaladores no GitHub a cada versão.
 
@@ -264,7 +264,7 @@ pública em `assets/updater.pub`, preservada da configuração anterior.
 Se preferir gerar uma nova chave:
 
 ```sh
-cargo packager signer generate --path keys/techdoro.key
+cargo packager signer generate --path .keys/techdoro.key
 ```
 
 Guarde a chave privada no secret e atualize `assets/updater.pub` com o conteúdo do
@@ -272,11 +272,12 @@ arquivo `.pub`. Opcionalmente, a variável de repositório
 `TECHDORO_UPDATER_PUBLIC_KEY` substitui a chave pública durante o build de release.
 Nunca versione a chave privada.
 
-Atualize `Cargo.toml` e crie `.github/release-notes/vX.Y.Z.md` antes de enviar a tag:
+Atualize `Cargo.toml`, crie `.github/release-notes/vX.Y.Z.md` e substitua
+`X.Y.Z` pela mesma versão definida em `Cargo.toml` antes de enviar a tag:
 
 ```sh
-git tag -a v4.0.0 -m "Techdoro 4.0.0"
-git push origin v4.0.0
+git tag -a vX.Y.Z -m "Techdoro X.Y.Z"
+git push origin vX.Y.Z
 ```
 
 O workflow valida a versão e as notas, executa os checks, gera e assina os três pacotes

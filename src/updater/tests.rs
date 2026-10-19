@@ -25,6 +25,16 @@ fn windows_installer_is_configured_to_relaunch_after_installation() {
 }
 
 #[test]
+fn installer_startup_panics_are_reported_as_errors() {
+    let error = super::catch_installer_panic(|| -> anyhow::Result<()> {
+        panic!("installer failed to start");
+    })
+    .unwrap_err();
+
+    assert!(error.to_string().contains("installer failed to start"));
+}
+
+#[test]
 fn selects_only_the_installed_format_and_a_newer_version() {
     let current = Version::parse("4.0.0").unwrap();
     let update = select_linux_update(manifest("v4.1.0"), PackageFormat::Rpm, &current, "x86_64")

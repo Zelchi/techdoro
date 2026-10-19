@@ -1,6 +1,6 @@
 [package]
 name = "techdoro"
-version = "4.0.2"
+version = "4.0.3"
 edition = "2024"
 rust-version = "1.92"
 description = "A native Pomodoro timer with a task list for your desktop"

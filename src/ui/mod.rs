@@ -1,5 +1,6 @@
 mod settings;
 mod style;
+mod task_drag;
 mod tasks;
 mod theme;
 mod timer;
